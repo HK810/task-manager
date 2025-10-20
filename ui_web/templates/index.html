@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Add Task</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('create_task') }}">
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-control" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <select class="form-select" name="priority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Add</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">Filters</div>
+      <div class="card-body">
+        <form method="get" action="{{ url_for('index') }}" class="row g-2">
+          <div class="col-12">
+            <input type="text" class="form-control" placeholder="Search" name="q" value="{{ query or '' }}">
+          </div>
+          <div class="col-6">
+            <select class="form-select" name="status">
+              <option value="">All Status</option>
+              <option value="pending" {% if status=='pending' %}selected{% endif %}>Pending</option>
+              <option value="completed" {% if status=='completed' %}selected{% endif %}>Completed</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <select class="form-select" name="priority">
+              <option value="">All Priority</option>
+              <option value="high" {% if priority=='high' %}selected{% endif %}>High</option>
+              <option value="medium" {% if priority=='medium' %}selected{% endif %}>Medium</option>
+              <option value="low" {% if priority=='low' %}selected{% endif %}>Low</option>
+            </select>
+          </div>
+          <div class="col-12 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Tasks</h5>
+      <span class="text-muted">Total: {{ stats.total }} • Pending: {{ stats.pending }} • Completed: {{ stats.completed }}</span>
+    </div>
+    {% if tasks %}
+    <ul class="list-group">
+      {% for t in tasks %}
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="ms-0 me-auto">
+            <div class="fw-bold">
+              <form method="post" action="{{ url_for('toggle_task', task_id=t.id) }}" class="d-inline">
+                <button class="btn btn-sm {% if t.status=='completed' %}btn-success{% else %}btn-outline-secondary{% endif %}" title="Toggle Status">{% if t.status=='completed' %}✓{% else %}○{% endif %}</button>
+              </form>
+              [#{{ t.id }}] {{ t.title }}
+              <span class="badge {% if t.priority=='high' %}bg-danger{% elif t.priority=='medium' %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ t.priority.title() }}</span>
+            </div>
+            {% if t.description %}
+              <div class="text-muted small">{{ t.description }}</div>
+            {% endif %}
+            <div class="text-muted small">Status: {{ t.status.title() }} • Created: {{ t.created_at[:19] }}</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#edit-{{ t.id }}">Edit</button>
+            <form method="post" action="{{ url_for('delete_task', task_id=t.id) }}">
+              <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete task #{{ t.id }}?')">Delete</button>
+            </form>
+          </div>
+        </div>
+        <div class="collapse mt-3" id="edit-{{ t.id }}">
+          <form method="post" action="{{ url_for('update_task', task_id=t.id) }}" class="row g-2">
+            <div class="col-md-6">
+              <input type="text" class="form-control" name="title" value="{{ t.title }}">
+            </div>
+            <div class="col-md-6">
+              <select class="form-select" name="status">
+                <option value="pending" {% if t.status=='pending' %}selected{% endif %}>Pending</option>
+                <option value="completed" {% if t.status=='completed' %}selected{% endif %}>Completed</option>
+              </select>
+            </div>
+            <div class="col-md-8">
+              <input type="text" class="form-control" name="description" value="{{ t.description }}">
+            </div>
+            <div class="col-md-4">
+              <select class="form-select" name="priority">
+                <option value="high" {% if t.priority=='high' %}selected{% endif %}>High</option>
+                <option value="medium" {% if t.priority=='medium' %}selected{% endif %}>Medium</option>
+                <option value="low" {% if t.priority=='low' %}selected{% endif %}>Low</option>
+              </select>
+            </div>
+            <div class="col-12 d-grid">
+              <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <div class="alert alert-info">No tasks found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
